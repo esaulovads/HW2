@@ -50,3 +50,57 @@
         cmd: "{{ __pg_bin_dir }}/pg_ctl initdb -D {{ postgres__data_dir }}"
         creates: "{{ postgres__data_dir }}/PG_VERSION"
       become_user: postgres
+
+    - name: Configure postgresql.conf
+      ansible.builtin.lineinfile:
+        path: "{{ postgres__data_dir }}/postgresql.conf"
+        regexp: "^#?{{ item.key | regex_escape() }}\\s*="
+        line: "{{ item.key }} = {{ item.value }}"
+        create: false
+      loop: "{{ postgres__opts | dict2items }}"
+      loop_control:
+        label: "{{ item.key }}"
+      notify:
+        - Restart PostgreSQL
+
+    - name: Configure pg_hba.conf
+      ansible.builtin.template:
+        src: pg_hba.conf.j2
+        dest: "{{ postgres__data_dir }}/pg_hba.conf"
+        owner: postgres
+        group: postgres
+        mode: "0600"
+      notify:
+        - Reload PostgreSQL
+
+    - name: Copy PostgreSQL systemd service
+      ansible.builtin.template:
+        src: postgres.service.j2
+        dest: "/etc/systemd/system/{{ __service_name }}.service"
+        owner: root
+        group: root
+        mode: "0644"
+      notify:
+        - Daemon reload
+        - Restart PostgreSQL
+
+    - name: Enable PostgreSQL service now
+      ansible.builtin.systemd_service:
+        name: "{{ __service_name }}.service"
+        enabled: true
+        state: started
+
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers
+
+- name: Check PostgreSQL
+  community.postgresql.postgresql_query:
+    db: postgres
+    query: SELECT 1
+  become: true
+  become_user: postgres
+  register: __result
+  until: __result is succeeded
+  retries: 6
+  delay: 5
+  changed_when: false

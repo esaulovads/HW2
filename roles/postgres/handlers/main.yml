@@ -1,0 +1,16 @@
+- name: Daemon reload
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+  become: true
+
+- name: Restart PostgreSQL
+  ansible.builtin.systemd_service:
+    name: "{{ __service_name }}.service"
+    state: restarted
+  become: true
+
+- name: Reload PostgreSQL
+  ansible.builtin.systemd_service:
+    name: "{{ __service_name }}.service"
+    state: reloaded
+  become: true
