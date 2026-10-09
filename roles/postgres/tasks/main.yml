@@ -95,7 +95,7 @@
 
 - name: Check PostgreSQL
   community.postgresql.postgresql_query:
-    db: postgres
+    login_db: postgres
     query: SELECT 1
   become: true
   become_user: postgres
