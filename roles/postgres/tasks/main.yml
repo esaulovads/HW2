@@ -104,3 +104,29 @@
   retries: 6
   delay: 5
   changed_when: false
+
+- name: Create users
+  community.postgresql.postgresql_user:
+    name: "{{ item.name }}"
+    password: "{{ item.password | default(omit) }}"
+    update_password: on_create
+    role_attr_flags: "{{ item.role_attr_flags | default(omit) }}"
+    state: "{{ item.state | default(omit) }}"
+  loop: "{{ postgres__users }}"
+  loop_control:
+    label: "{{ item.name }}"
+  become: true
+  become_user: postgres
+  no_log: true
+
+- name: Create databases
+  community.postgresql.postgresql_db:
+    name: "{{ item.name }}"
+    owner: "{{ item.owner | default(omit) }}"
+    encoding: "{{ item.encoding | default(omit) }}"
+    state: "{{ item.state | default(omit) }}"
+  loop: "{{ postgres__databases }}"
+  loop_control:
+    label: "{{ item.name }}"
+  become: true
+  become_user: postgres

@@ -1,0 +1,7 @@
+postgres__users:
+  - name: appuser
+    password: "{{ vault_appuser_password }}"
+
+postgres__databases:
+  - name: appdb
+    owner: appuser
