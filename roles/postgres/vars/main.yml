@@ -2,3 +2,6 @@ __pg_version: "18"
 __pg_bin_dir: "/usr/lib/postgresql/{{ __pg_version }}/bin"
 __root_dir: /data
 __service_name: postgres-server
+__exporter_dir: "/tmp/postgres-exporter-{{ postgres__exporter_version }}"
+__exporter_url: "https://github.com/prometheus-community/postgres_exporter/releases/download/v{{ postgres__exporter_version }}/postgres_exporter-{{ postgres__exporter_version }}.linux-amd64.tar.gz"
+__exporter_os_user: postgres_exporter

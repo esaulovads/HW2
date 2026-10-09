@@ -1,0 +1,81 @@
+- name: Download exporter on controller
+  delegate_to: localhost
+  become: false
+  run_once: true
+  block:
+    - name: Create download dir
+      ansible.builtin.file:
+        path: "{{ __exporter_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Download exporter
+      ansible.builtin.unarchive:
+        src: "{{ __exporter_url }}"
+        dest: "{{ __exporter_dir }}"
+        remote_src: true
+        extra_opts:
+          - --strip-components=1
+        creates: "{{ __exporter_dir }}/postgres_exporter"
+
+- name: Install exporter on target
+  become: true
+  block:
+    - name: Create exporter system user
+      ansible.builtin.user:
+        name: "{{ __exporter_os_user }}"
+        system: true
+        shell: /usr/sbin/nologin
+        create_home: false
+
+    - name: Copy exporter executable
+      ansible.builtin.copy:
+        src: "{{ __exporter_dir }}/postgres_exporter"
+        dest: /usr/local/sbin/postgres-exporter
+        owner: root
+        group: root
+        mode: "0755"
+      notify:
+        - Restart PostgreSQL exporter
+
+    - name: Create exporter database user
+      community.postgresql.postgresql_user:
+        name: "{{ postgres__exporter_user }}"
+        password: "{{ postgres__exporter_password }}"
+        no_password_changes: true
+      become_user: postgres
+      no_log: true
+
+    - name: Grant pg_monitor to exporter user
+      community.postgresql.postgresql_membership:
+        groups: pg_monitor
+        target_roles: "{{ postgres__exporter_user }}"
+      become_user: postgres
+
+    - name: Copy exporter environment file
+      ansible.builtin.template:
+        src: postgres-exporter.env.j2
+        dest: /etc/postgres-exporter.env
+        owner: root
+        group: root
+        mode: "0600"
+      no_log: true
+      notify:
+        - Restart PostgreSQL exporter
+
+    - name: Copy exporter systemd service
+      ansible.builtin.template:
+        src: postgres-exporter.service.j2
+        dest: /etc/systemd/system/postgres-exporter.service
+        owner: root
+        group: root
+        mode: "0644"
+      notify:
+        - Daemon reload
+        - Restart PostgreSQL exporter
+
+    - name: Enable exporter service now
+      ansible.builtin.systemd_service:
+        name: postgres-exporter.service
+        enabled: true
+        state: started

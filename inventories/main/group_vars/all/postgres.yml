@@ -5,3 +5,5 @@ postgres__users:
 postgres__databases:
   - name: appdb
     owner: appuser
+
+postgres__exporter_password: "{{ vault_exporter_password }}"

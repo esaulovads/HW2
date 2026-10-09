@@ -130,3 +130,6 @@
     label: "{{ item.name }}"
   become: true
   become_user: postgres
+
+- name: Install exporter
+  ansible.builtin.import_tasks: exporter.yml
