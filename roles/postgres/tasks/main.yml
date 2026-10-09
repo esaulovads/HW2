@@ -109,7 +109,7 @@
   community.postgresql.postgresql_user:
     name: "{{ item.name }}"
     password: "{{ item.password | default(omit) }}"
-    update_password: on_create
+    no_password_changes: true
     role_attr_flags: "{{ item.role_attr_flags | default(omit) }}"
     state: "{{ item.state | default(omit) }}"
   loop: "{{ postgres__users }}"
