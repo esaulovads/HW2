@@ -1,0 +1,52 @@
+- name: Configure PostgreSQL
+  become: true
+  block:
+    - name: Install base packages
+      ansible.builtin.apt:
+        name:
+          - postgresql-common
+          - python3-psycopg2
+          - acl
+        update_cache: true
+        state: present
+
+    - name: Disable default cluster creation
+      ansible.builtin.lineinfile:
+        path: /etc/postgresql-common/createcluster.conf
+        regexp: "^#?create_main_cluster\\s*="
+        line: "create_main_cluster = false"
+
+    - name: Install PostgreSQL package
+      ansible.builtin.apt:
+        name: "postgresql-{{ __pg_version }}"
+        state: present
+
+    - name: Create root data directory
+      ansible.builtin.file:
+        path: "{{ __root_dir }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Create postgres directory
+      ansible.builtin.file:
+        path: "{{ postgres__data_dir | dirname }}"
+        state: directory
+        owner: postgres
+        group: postgres
+        mode: "0700"
+
+    - name: Create data directory
+      ansible.builtin.file:
+        path: "{{ postgres__data_dir }}"
+        state: directory
+        owner: postgres
+        group: postgres
+        mode: "0700"
+
+    - name: Init database cluster
+      ansible.builtin.command:
+        cmd: "{{ __pg_bin_dir }}/pg_ctl initdb -D {{ postgres__data_dir }}"
+        creates: "{{ postgres__data_dir }}/PG_VERSION"
+      become_user: postgres

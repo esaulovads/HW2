@@ -1,0 +1,3 @@
+__pg_version: "18"
+__pg_bin_dir: "/usr/lib/postgresql/{{ __pg_version }}/bin"
+__root_dir: /data
