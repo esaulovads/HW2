@@ -21,13 +21,6 @@
 - name: Install exporter on target
   become: true
   block:
-    - name: Create exporter system user
-      ansible.builtin.user:
-        name: "{{ __exporter_os_user }}"
-        system: true
-        shell: /usr/sbin/nologin
-        create_home: false
-
     - name: Copy exporter executable
       ansible.builtin.copy:
         src: "{{ __exporter_dir }}/postgres_exporter"
